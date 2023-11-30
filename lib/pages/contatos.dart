@@ -1,6 +1,7 @@
+import 'package:bytebank/controller/shared_preferences_service.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import '../components/card_lista_contatos.dart';
 
 class Contatos extends StatefulWidget {
   const Contatos({super.key});
@@ -10,31 +11,15 @@ class Contatos extends StatefulWidget {
 }
 
 class _ContatosState extends State<Contatos> {
-  final TextEditingController controllerName = TextEditingController();
+  final SharedPreferencesService _prefs = Get.put(SharedPreferencesService());
 
-  List<String> contatos = [];
-
-  Future<void> salvarUsuario(String value) async {
-    final prefs = await SharedPreferences.getInstance();
-    contatos.add(value);
-    prefs.setStringList('usuarios', contatos);
-    setState(() {});
-  }
-
-  Future<void> incrementarUsuario() async {
-    final prefs = await SharedPreferences.getInstance();
-    final usuariosSalvos = prefs.getStringList('usuarios') ?? [];
-    setState(() {
-      contatos = usuariosSalvos;
-    });
-    await prefs.setStringList('usuarios', contatos);
-  }
+  final _formKey = GlobalKey<FormState>();
 
   @override
   void initState() {
     super.initState();
     setState(() {
-      incrementarUsuario();
+      _prefs.incrementarUsuario();
     });
   }
 
@@ -44,27 +29,7 @@ class _ContatosState extends State<Contatos> {
       floatingActionButton: FloatingActionButton(
         backgroundColor: Colors.green[900],
         onPressed: () {
-          showDialog(
-            context: context,
-            builder: (context) => AlertDialog(
-              title: TextFormField(
-                controller: controllerName,
-                decoration: const InputDecoration(
-                  labelText: 'Nome Completo',
-                ),
-              ),
-              content: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green[900],
-                ),
-                onPressed: () async {
-                  salvarUsuario(controllerName.text);
-                  Get.back();
-                },
-                child: const Text('Salvar'),
-              ),
-            ),
-          );
+          showAddUsuario(context);
         },
         child: const Icon(Icons.person_add),
       ),
@@ -72,28 +37,74 @@ class _ContatosState extends State<Contatos> {
         backgroundColor: Colors.green[900],
         title: const Text('Contatos'),
       ),
-      body: ListView.builder(
-        itemCount: contatos.length,
-        itemBuilder: (context, index) {
-          return Padding(
-            padding:
-                const EdgeInsets.only(right: 10, left: 10, top: 7, bottom: 5),
-            child: Card(
-              elevation: 3,
-              child: ListTile(
-                leading: const CircleAvatar(
-                  backgroundImage: AssetImage(
-                    'images/personimage.png',
-                  ),
-                ),
-                title: Text(
-                  contatos[index],
-                  style: const TextStyle(fontSize: 19),
-                ),
-              ),
+      body: CardListaContatos(
+        prefs: _prefs,
+      ),
+    );
+  }
+
+  Future<dynamic> showAddUsuario(BuildContext context) {
+    return showDialog(
+      context: context,
+      builder: (context) => Form(
+        key: _formKey,
+        child: AlertDialog(
+          title: const Text('Adicionar um usuário'),
+          content: TextFormField(
+            validator: (String? value) {
+              if (value!.isEmpty) {
+                return 'Por favor. Insira um nome para o usuário';
+              } else {
+                return null;
+              }
+            },
+            controller: _prefs.controllerName,
+            decoration: const InputDecoration(
+              labelText: 'Nome Completo',
             ),
-          );
-        },
+          ),
+          actions: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green[900],
+                  ),
+                  onPressed: () async {
+                    Get.back();
+                  },
+                  child: const Text('Não'),
+                ),
+                const SizedBox(width: 15),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green[900],
+                  ),
+                  onPressed: () {
+                    if (_formKey.currentState!.validate()) {
+                      setState(() {
+                        _prefs.salvarUsuario(_prefs.controllerName.text);
+                      });
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          backgroundColor: Colors.green[900],
+                          content: Text('Usuário: ${_prefs.contatos} salvo'),
+                        ),
+                      );
+                      _prefs.controllerName.clear();
+                      Get.back();
+                    } else {
+                      return;
+                    }
+                  },
+                  child: const Text('Salvar'),
+                ),
+                const SizedBox(width: 12),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

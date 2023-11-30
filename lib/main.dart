@@ -23,7 +23,7 @@ class _MyAppState extends State<MyApp> {
       initialRoute: '/',
       getPages: [
         GetPage(name: '/', page: () => const HomePage()),
-        GetPage(name: '/contatos', page: () => Contatos()),
+        GetPage(name: '/contatos', page: () => const Contatos()),
       ],
     );
   }

@@ -1,21 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class SharedPreferencesService {
+class SharedPreferencesService extends GetxService {
   final TextEditingController controllerName = TextEditingController();
 
-  List<String> contatos = [];
+  RxList<String> contatos = <String>[].obs;
 
-  Future<void> salvarUsuario(String value) async {
+  salvarUsuario(String value) async {
     final prefs = await SharedPreferences.getInstance();
     contatos.add(value);
     prefs.setStringList('usuarios', contatos);
   }
 
-  Future<void> incrementarUsuario() async {
+  incrementarUsuario() async {
     final prefs = await SharedPreferences.getInstance();
     final usuariosSalvos = prefs.getStringList('usuarios') ?? [];
-    contatos = usuariosSalvos;
+    contatos = usuariosSalvos.obs;
+    await prefs.setStringList('usuarios', contatos);
+  }
+
+  removerUsuarioDaLista(String usuario) async {
+    final prefs = await SharedPreferences.getInstance();
+    contatos.remove(usuario);
     await prefs.setStringList('usuarios', contatos);
   }
 }

@@ -1,5 +1,5 @@
-import 'package:bytebank/components/card_contatos.dart';
 import 'package:flutter/material.dart';
+import '../components/card_contatos.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
